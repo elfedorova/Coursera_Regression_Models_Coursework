@@ -1,0 +1,103 @@
+---
+title: 'Automatic and manual transmissions: comparative study'
+author: "Elena Fedorova"
+date: "25 August 2018"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary
+
+The report explores relationship between transmission type (manual or automatic) and miles per
+gallon (MPG). The analysis is based on the mtcars dataset. The following questions were addressed in the report: define which type of transmission is better for MPG, and quantify the difference in MPG. The simple linear regression and the multiple regression models with hypothesis testing will be used in the analysis. Both models ultimately confirmed that the cars in this study with manual transmissions had on average significantly higher MPG’s than the cars with automatic transmissions. Data visualisation is presented in the Appendix section.
+
+## Loading, processing and exloring the data
+```{r, echo=TRUE}
+data(mtcars)
+head(mtcars, n = 3)
+summary(mtcars)
+```
+
+## Analysis
+#Simple linear regression
+```{r, echo=TRUE}
+ModelFit <- lm(mpg ~ am, data = mtcars)
+summary(ModelFit)
+summary(ModelFit)$coeff 
+```
+The Beta0/intercept coefficient is mean MPG for cars with automatic transmissions; the Beta1/am coefficient is the mean increase in MPG for cars with manual transmissions (am = 1). (Beta0 + beta1) is the mean MPG for cars with manual transmissions. So, the mean difference in MPG is 7.244939.
+
+Thus, the 95% confidence interval for beta1 (mean MPG difference) is following:
+```{r, echo=TRUE}
+alpha <- 0.05
+n <- length(mtcars$mpg)
+pe <- coef(summary(ModelFit))["am", "Estimate"]
+se <- coef(summary(ModelFit))["am", "Std. Error"]
+t <- qt(1 - alpha/2, n - 2)
+pe + c(-1, 1) * (se * t)
+ 
+```
+
+Based on the results, we can reject the null hyposthesis in favor of the alternative one: that there is a significant difference in MPG between the two groups at alpha = 0.05.
+
+#Multiple regression
+The following predictor variables will be included into analysis: wt (weight), qsec (1/4 mile time) and am (transmission type).The following step-by-step approach will be used in the modelling: 
+1) Start with the predictor whose correlation with mpg is highest (wt)
+2) The variables that are highly correlated with wt are to be removed
+3) Add the remaining predictor, qsec
+4) Finally add am, to see if it is a significant predictor.
+
+```{r, echo=TRUE}
+MultiFit <- lm(mpg ~ wt + qsec + am, data=mtcars)
+summary(MultiFit)
+coef(summary(MultiFit))
+```
+
+So, the mean difference in MPG is 2.935837.
+Thus, the 95% confidence interval for beta1 (mean MPG difference) is following:
+```{r, echo=TRUE}
+alpha <- 0.05
+n <- length(mtcars$mpg)
+pe <- coef(summary(MultiFit))["am", "Estimate"]
+se <- coef(summary(MultiFit))["am", "Std. Error"]
+t <- qt(1 - alpha/2, n - 2)
+pe + c(-1, 1) * (se * t)
+
+```
+Based on the results, we can also reject null hypothesis in favor of the alternative  one: that there is a significant difference in MPG between the two groups at alpha = 0.05.
+
+
+## Conclusion
+The analysis performed confirmed that there is difference in MPG associated with transmission type.In the simple model, the mean MPG difference is 7.25 MPG, while the multiple regression model delivers the difference of 2.93 MPG.
+
+## Appendix
+This section contains basic exploratory data analysis and all the required visualisations supporting the final conclusion.
+
+#1. Exploratory comparison of Automatic and Manual transmission MPG
+The presented boxplots based on the observations of our data set demonstrate that on average the cars with manual transmission generally have higher MPG.
+```{r, echo=TRUE}
+library(ggplot2)
+ggplot(data = mtcars, aes(x = as.factor(mtcars$am), y = mtcars$mpg)) + geom_boxplot() + labs(x = "Transmission type: 0 - Automatic, 1 - Manual", y = "MPG") + ggtitle("Comparison")
+
+```
+
+#2. Scatterplots
+The presented scatterplots visually demonstrate correlations: moderate association can be noticed
+```{r, echo=TRUE}
+mtcarsv <- mtcars[, c(1, 6, 7, 9)]
+pairs(mtcarsv, panel = panel.smooth, col = "blue")
+
+```
+
+#3. Residual diagnostics
+```{r, echo=TRUE}
+plot(MultiFit)
+```
+The following plots lead us to the following conclusion that the residuals and fitted values are independent. The points of the Normal Q-Q plot following closely to the line conclude that the distribution of residuals is normal.The Scale-Location plot random distribution confirms the constant variance assumption. As all the points are within the 0.05, the Residuals vs. Leverage concludes that there are no outliers.
+
